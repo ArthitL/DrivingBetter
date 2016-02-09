@@ -60,6 +60,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             makerLatDoubles[i] = Double.parseDouble(objCursor.getString(objCursor.getColumnIndex(ManageTABLE.COLUMN_Lat)));
             markerLngDoubles[i] = Double.parseDouble(objCursor.getString(objCursor.getColumnIndex(ManageTABLE.COLUMN_Lng)));
             makerLatLngs[i] = new LatLng(makerLatDoubles[i], markerLngDoubles[i]);
+            carIDStrings[i] = objCursor.getString(objCursor.getColumnIndex(ManageTABLE.COLUMN_ID_car_login));
+            dateCarStrings[i] = objCursor.getString(objCursor.getColumnIndex(ManageTABLE.COLUMN_TimeDate));
+
+
+
 
             objCursor.moveToNext();
         } //for
@@ -87,7 +92,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         for (int i = 0; i < makerLatLngs.length; i++) {
 
-            mMap.addMarker(new MarkerOptions().position(makerLatLngs[i]));
+            mMap.addMarker(new MarkerOptions().position(makerLatLngs[i]).title(carIDStrings[i]
+            ).snippet(dateCarStrings[i]));
         } //for
     } //marker car
 
