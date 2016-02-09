@@ -39,7 +39,8 @@ public class MainHoldActivity extends AppCompatActivity {
     }
 
     public  void  clickGPS(View view) {
-
+        Intent objIntent = new Intent(MainHoldActivity.this, MapsActivity.class);
+        startActivity(objIntent);
     }
 
     public void clickCenterService(View view) {

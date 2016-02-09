@@ -1,5 +1,8 @@
 package appewtc.masterung.drivingbetter;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Camera;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
@@ -12,9 +15,18 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
+
+    //Explicit
     private GoogleMap mMap;
+    private double centerLatADouble = 13.66956921;
+    private double centerLngADouble = 100.61620474;
+    private LatLng centerLatLng;
+    private double[] makerLatDoubles, markerLngDoubles;
+    private LatLng[] makerLatLngs;
+    private String[] carIDStrings, dateCarStrings;
 
     @Override
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
@@ -22,25 +34,67 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-    }
 
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
+        //Read all SQLite
+        readAllSQLite();
+
+
+    } //Main method
+
+    private void readAllSQLite() {
+
+        SQLiteDatabase objSqLiteDatabase = openOrCreateDatabase(MyOpenHelper.DATABASE_NAME,
+                MODE_PRIVATE, null);
+        Cursor objCursor = objSqLiteDatabase.rawQuery("SELECT * FROM " + ManageTABLE.TABLE_LOGIN, null);
+        int intCount = objCursor.getCount();
+        makerLatDoubles = new double[intCount];
+        markerLngDoubles = new double[intCount];
+        makerLatLngs = new LatLng[intCount];
+        carIDStrings = new String[intCount];
+        dateCarStrings = new String[intCount];
+
+        objCursor.moveToFirst();
+        for (int i = 0; i < intCount; i++) {
+
+            makerLatDoubles[i] = Double.parseDouble(objCursor.getString(objCursor.getColumnIndex(ManageTABLE.COLUMN_Lat)));
+            markerLngDoubles[i] = Double.parseDouble(objCursor.getString(objCursor.getColumnIndex(ManageTABLE.COLUMN_Lng)));
+            makerLatLngs[i] = new LatLng(makerLatDoubles[i], markerLngDoubles[i]);
+
+            objCursor.moveToNext();
+        } //for
+
+        objCursor.close();
+
+    } //read all SQLite
+
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        //Create Map on center
+        createMapOnCenter();
+
+
+        //Maker Car
+        markerCar();
+
+
+    }   //on Map ready
+
+    private void markerCar() {
+
+        for (int i = 0; i < makerLatLngs.length; i++) {
+
+            mMap.addMarker(new MarkerOptions().position(makerLatLngs[i]));
+        } //for
+    } //marker car
+
+    private void createMapOnCenter() {
+        centerLatLng = new LatLng(centerLatADouble, centerLngADouble);
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(centerLatLng, 16));
+
     }
-}
+}      //Main class
