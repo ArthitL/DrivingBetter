@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import java.util.Calendar;
+
 public class InformationActivity extends AppCompatActivity {
 
     //Explicit
@@ -29,6 +31,8 @@ public class InformationActivity extends AppCompatActivity {
 
 
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,7 +45,49 @@ public class InformationActivity extends AppCompatActivity {
 
         showView();
 
+
+        creatNextTimeAlert();
     }    // Main Method
+
+    private void creatNextTimeAlert() {
+
+
+
+        Calendar currentCalendar = Calendar.getInstance();
+        Calendar[] alertCalandar = new Calendar[4];
+        String[] alertTime = new String[4];
+        alertTime[0] = ACTnextTextView.getText().toString();
+        alertTime[1] = taxTextView.getText().toString();
+        alertTime[2] = insureNextTextView.getText().toString();
+        alertTime[3] = battNextTextView.getText().toString();
+
+
+        for (int i = 0; i < 4; i++) {
+
+            alertCalandar[i] = (Calendar) currentCalendar.clone();
+            alertCalandar[i].set(Calendar.DAY_OF_MONTH, timeofMonth(alertTime[i], 0));
+            alertCalandar[i].set(Calendar.MONTH, timeofMonth(alertTime[i],1)-1);
+            alertCalandar[i].set(Calendar.YEAR, timeofMonth(alertTime[i],2));
+            alertCalandar[i].set(Calendar.HOUR_OF_DAY,8); //alert 8:00 AM
+            alertCalandar[i].set(Calendar.MINUTE, 0); // Minute Alert
+            alertCalandar[i].set(Calendar.SECOND, 0); // Second alert
+            alertCalandar[i].set(Calendar.MILLISECOND,0);// Milisecond
+
+        }  //for
+    }
+
+    private int timeofMonth(String strDate, int intIndex) {
+
+        int intresult =0;
+
+        String[] resultString = strDate.split("/");
+        intresult = Integer.parseInt(resultString[intIndex]);
+
+        return intresult;
+
+
+
+    }
 
     private void showView() {
 
@@ -85,6 +131,7 @@ public class InformationActivity extends AppCompatActivity {
         // Increase Year
         int intYear = Integer.parseInt(ACTStrings[2]);
         intYear += 1;
+
 
         ACTnextString = ACTStrings[0] + "/" + ACTStrings[1] + "/" + Integer.toString(intYear);
         ACTnextTextView.setText(ACTnextString);
