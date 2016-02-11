@@ -49,6 +49,11 @@
         <activity
             android:name=".MapsActivity"
             android:label="@string/title_activity_maps"></activity>
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:process=":remote" />
+
     </application>
 
 </manifest>

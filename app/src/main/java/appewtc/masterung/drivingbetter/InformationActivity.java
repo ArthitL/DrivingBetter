@@ -1,5 +1,9 @@
 package appewtc.masterung.drivingbetter;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v7.app.AppCompatActivity;
@@ -72,6 +76,12 @@ public class InformationActivity extends AppCompatActivity {
             alertCalandar[i].set(Calendar.MINUTE, 0); // Minute Alert
             alertCalandar[i].set(Calendar.SECOND, 0); // Second alert
             alertCalandar[i].set(Calendar.MILLISECOND,0);// Milisecond
+
+            Intent objIntent = new Intent(getBaseContext(), AlarmReceiver.class);
+            PendingIntent objPendingIntent = PendingIntent.getBroadcast(getBaseContext(),1,objIntent,0);
+            AlarmManager objAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            objAlarmManager.set(AlarmManager.RTC_WAKEUP, alertCalandar[i].getTimeInMillis(),objPendingIntent);
+
 
         }  //for
     }
