@@ -1,14 +1,25 @@
 package appewtc.masterung.drivingbetter;
 
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.media.RingtoneManager;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
+
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -26,9 +37,10 @@ public class MainHoldActivity extends AppCompatActivity {
 
     //Explicit
     private String idString;
-    private int TimesAnInt = 0;
-    private double distantAdouble;
+    private int timesAnInt = 0;
+    private double distantADouble, mySumADouble = 0;
     private double[] latDoubles, lngDoubles;
+
 
 
     @Override
@@ -36,21 +48,175 @@ public class MainHoldActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_hold);
 
-        // Receive from login
+        //Receive from Login
         idString = getIntent().getStringExtra("id");
         Log.d("car", "idString = " + idString);
 
         //Setup Start
         latDoubles = new double[2];
         lngDoubles = new double[2];
+
+       // จุดเริ่มต้นของการวัดระยะ
         latDoubles[0] = 13.6770983;
         lngDoubles[0] = 100.6159983;
 
 
         //Calculate Distance
-        calculateDistance();
+        //calculateDistance();
+
+//        FindFirstlocation findFirstlocation = new FindFirstlocation();
+//        findFirstlocation.execute();
+//
+//        calculateDistanceLast();
+
 
     }   // Main Method
+
+    public class FindFirstlocation extends AsyncTask<Void, Void, String> {
+
+
+        @Override
+        protected String doInBackground(Void... voids) {
+
+            try {
+
+                OkHttpClient okHttpClient = new OkHttpClient();
+                Request.Builder builder = new Request.Builder();
+                Request request = builder.url("http://swiftcodingthai.com/car/php_get_first.php").build();
+                Response response = okHttpClient.newCall(request).execute();
+                return response.body().string();
+
+            } catch (Exception e) {
+
+                return null;
+            }
+
+        } // do in back
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+
+
+            try {
+
+                JSONArray jsonArray = new JSONArray();
+                JSONObject jsonObject = jsonArray.getJSONObject(0);
+
+                latDoubles[0] = Double.parseDouble(jsonObject.getString("Lat"));
+                lngDoubles[0] = Double.parseDouble(jsonObject.getString("Lng"));
+
+
+            } catch (Exception e) {
+
+                e.printStackTrace();
+            }
+
+        }// on post
+    } //Findfirstlocation
+
+    public class MyConnected extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected String doInBackground(Void... voids) {
+
+            try {
+
+                OkHttpClient okHttpClient = new OkHttpClient();
+                Request.Builder builder = new Request.Builder();
+                Request request = builder.url("http://swiftcodingthai.com/car/php_get_check.php").build();
+                Response response = okHttpClient.newCall(request).execute();
+                return response.body().string();
+
+            } catch (Exception e) {
+                return null;
+            }   // try
+
+        }   // doInBack
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+
+            Log.d("7April", "s ==> " + s);
+
+            try {
+
+                JSONArray jsonArray = new JSONArray(s);
+                JSONObject jsonObject = jsonArray.getJSONObject(0);
+                double douLat = Double.parseDouble(jsonObject.getString("Lat"));
+                double douLng = Double.parseDouble(jsonObject.getString("Lng"));
+
+                mySumDistance(distance(latDoubles[0], lngDoubles[0], douLat, douLng));
+
+                latDoubles[0] = douLat;
+                lngDoubles[0] = douLng;
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }   // try
+
+        }   // onPost
+    }   // MyConnected Class
+
+    private void mySumDistance(double distance) {
+
+        mySumADouble = mySumADouble + distance;
+        Log.d("8April", "mySum ==> " + mySumADouble);
+
+        if (mySumADouble > 2000) {
+            mynotification();
+            Toast.makeText(this, "ถึงระยะทำการตรวจเช็ค", Toast.LENGTH_SHORT).show();
+        } else if (checkTime())
+
+        {
+
+            mynotification();
+        }
+
+
+    }   // mySum
+
+    private boolean checkTime() {
+
+
+
+        return false;
+    }
+
+    private void mynotification() {
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        builder.setSmallIcon(R.drawable.real48);
+        builder.setTicker("DrivingBetter");
+        builder.setWhen(System.currentTimeMillis());
+        builder.setContentTitle("Service");
+        builder.setContentText("ถึงเวลาเข้าตรวจสอบระยะ");
+        builder.setAutoCancel(false);
+
+        Uri soundUri = RingtoneManager.getDefaultUri(Notification.DEFAULT_SOUND);
+        builder.setSound(soundUri);
+
+        android.app.Notification notification = builder.build();
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(1000,notification);
+    }
+
+    private void calculateDistanceLast() {
+
+        MyConnected myConnected = new MyConnected();
+        myConnected.execute();
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                calculateDistanceLast();
+            }
+        }, 3000);
+
+    }   // cal
+
 
     //นี่คือ เมทอด ที่หาระยะ ระหว่างจุด
     private static double distance(double lat1, double lon1, double lat2, double lon2) {
@@ -73,15 +239,14 @@ public class MainHoldActivity extends AppCompatActivity {
     }
 
 
-
     private void calculateDistance() {
 
-        //Connect Http
+        //Connected Http
         StrictMode.ThreadPolicy threadPolicy = new StrictMode.ThreadPolicy
                 .Builder().permitAll().build();
         StrictMode.setThreadPolicy(threadPolicy);
 
-        //1. InputStream
+        //1 InputStream
         InputStream inputStream = null;
 
         try {
@@ -96,54 +261,61 @@ public class MainHoldActivity extends AppCompatActivity {
             Log.d("28March", "Input ==> " + e.toString());
         }
 
-        //2. SetJSON
-        String strJson = null;
+        //2 strJSON
+        String strJSON = null;
+
         try {
 
-
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream,"UTF-8"));
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
             StringBuilder stringBuilder = new StringBuilder();
             String strLine = null;
             while ((strLine = bufferedReader.readLine()) != null) {
                 stringBuilder.append(strLine);
             }
             inputStream.close();
-            strJson = stringBuilder.toString();
+            strJSON = stringBuilder.toString();
 
         } catch (Exception e) {
-            Log.d("28March", "StrJSON ==> " + e.toString());
+            Log.d("28March", "strJSON ==> " + e.toString());
         }
-        //3. Calculate Distance
+
+
+        //3 Calculate Distance
 
         try {
-            JSONArray jsonArray = new JSONArray(strJson);
+
+            JSONArray jsonArray = new JSONArray(strJSON);
             for (int i = 0; i < jsonArray.length(); i++) {
 
                 JSONObject jsonObject = jsonArray.getJSONObject(i);
                 latDoubles[1] = Double.parseDouble(jsonObject.getString("Lat"));
                 lngDoubles[1] = Double.parseDouble(jsonObject.getString("Lng"));
 
-                distantAdouble = distantAdouble + distance(latDoubles[0], lngDoubles[0],
+                //จะได้ Lat, Lng
+
+                distantADouble = distantADouble + distance(latDoubles[0], lngDoubles[0],
                         latDoubles[1], lngDoubles[1]);
 
-                Log.d("28March", "Dis ==>" + distantAdouble);
+                latDoubles[0] = latDoubles[1];
+                lngDoubles[0] = lngDoubles[1];
+
+                Log.d("28March", "Dis ==>" + distantADouble);
 
 
-
-            }      //for
+            }   // for
 
 
         } catch (Exception e) {
-                Log.d("28March", "Calculate ==> " + e.toString());
-            }
+            Log.d("28March", "Calculate ==> " + e.toString());
+        }
 
 
 
-                TimesAnInt += 1;
-        Log.d("28March", "Times = " + TimesAnInt);
+        timesAnInt += 1;
+        Log.d("28March", "Times = " + timesAnInt);
+
         myLoop();
-
-    }      //Calculate
+    }   // calculate
 
     private void myLoop() {
 
@@ -155,14 +327,14 @@ public class MainHoldActivity extends AppCompatActivity {
                 calculateDistance();
 
             }
-        },3000);
-    }      //Myloop
+        }, 3000);
+
+    } // myLoop
 
     public void clickInformation(View view) {
-
-        Intent obIntent = new Intent(MainHoldActivity.this, InformationActivity.class);
-        obIntent.putExtra("id", idString);
-        startActivity(obIntent);
+        Intent objIntent = new Intent(MainHoldActivity.this, InformationActivity.class);
+        objIntent.putExtra("id", idString);
+        startActivity(objIntent);
 
     }
 
@@ -172,17 +344,21 @@ public class MainHoldActivity extends AppCompatActivity {
 
     }
 
-    public  void  clickGPS(View view) {
+
+
+    public void clickGPS(View view) {
+
         Intent objIntent = new Intent(MainHoldActivity.this, MapsActivity.class);
         startActivity(objIntent);
-    }
+
+    }   //
 
     public void clickCenterService(View view) {
 
         AlertDialog.Builder objBuilder = new AlertDialog.Builder(this);
         objBuilder.setIcon(R.drawable.icon_question);
         objBuilder.setTitle(getResources().getString(R.string.tel));
-        objBuilder.setMessage("กรุณาเลือก");
+        objBuilder.setMessage("คุณต้องการไปที่ไหน ?");
         objBuilder.setCancelable(false);
         objBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
@@ -199,7 +375,7 @@ public class MainHoldActivity extends AppCompatActivity {
                 startActivity(objIntent);
                 dialogInterface.dismiss();
 
-            }   // Event
+            }   // event
         });
         objBuilder.setPositiveButton("ประกันภัย", new DialogInterface.OnClickListener() {
             @Override
@@ -210,13 +386,12 @@ public class MainHoldActivity extends AppCompatActivity {
                 startActivity(obj2Intent);
                 dialogInterface.dismiss();
 
-            }   // Event
+            }   // event
         });
 
         objBuilder.show();
 
-    }   // Click CenterService
 
+    }   // clickCenterService
 
 }   // Main Class
-

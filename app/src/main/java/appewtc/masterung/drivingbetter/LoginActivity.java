@@ -57,6 +57,14 @@ public class LoginActivity extends AppCompatActivity {
 
     }   // onCreate
 
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+
+        deleteAllValue();
+        synchronizeMySQLtoSQLite();
+    }
+
     private void createSpinner() {
 
         final String[] strProcinceArray = getResources().getStringArray(R.array.province);
@@ -86,7 +94,7 @@ public class LoginActivity extends AppCompatActivity {
 
     public void clickLogin(View view) {
 
-        idCardString = idCardEditText.getText().toString().trim() + " " + provinceString;
+        idCardString = idCardEditText.getText().toString().trim() + "/" + provinceString;
         passwordString = passwordEditText.getText().toString().trim();
 
         //Check Space
